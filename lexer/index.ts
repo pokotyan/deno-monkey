@@ -24,18 +24,21 @@ class Lexer {
   input: string; // コード
   position: number; // 入力における現在の位置（現在の文字を指し示す）
   readPosition: number; // これから読み込む位置（現在の文字の次）
-  ch: string | 0 | null; // 現愛検査中の文字
+  EOF: boolean; // EOFに達したかどうか
+  ch: string; // 現愛検査中の文字
 
   constructor(code: string) {
     this.input = code;
     this.position = 0;
     this.readPosition = 0;
-    this.ch = null;
+    this.EOF = false;
+    this.ch = "";
   }
 
   readChar() {
     if (this.readPosition >= this.input.length) {
-      this.ch = 0;
+      this.EOF = true;
+      this.ch = "";
     } else {
       this.ch = this.input[this.readPosition];
     }
@@ -69,7 +72,7 @@ class Lexer {
 
     while (true) {
       this.readChar();
-      if (this.ch === '"' || this.ch === 0) {
+      if (this.ch === '"' || this.EOF) {
         break;
       }
     }
@@ -77,108 +80,109 @@ class Lexer {
     return this.input.slice(position, this.position);
   }
 
-  NextToken(): token.Token {
+  nextToken(): token.Token {
     let tok: token.Token;
 
     this.skipWhitespace();
 
-    switch (this.ch) {
-      case "=":
-        if (this.peekChar() === "=") {
-          const ch = this.ch;
-          this.readChar();
-          const literal = `${ch}${this.ch}`;
+    if (this.EOF) {
+      tok = newToken(token.EOF, this.ch);
+    } else {
+      switch (this.ch) {
+        case "=":
+          if (this.peekChar() === "=") {
+            const ch = this.ch;
+            this.readChar();
+            const literal = `${ch}${this.ch}`;
+            tok = {
+              Type: token.EQ,
+              Literal: literal,
+            };
+          } else {
+            tok = newToken(token.ASSIGN, this.ch);
+          }
+          break;
+        case "+":
+          tok = newToken(token.PLUS, this.ch);
+          break;
+        case "-":
+          tok = newToken(token.MINUS, this.ch);
+          break;
+        case "!":
+          if (this.peekChar() === "=") {
+            const ch = this.ch;
+            this.readChar();
+            const literal = `${ch}${this.ch}`;
+            tok = {
+              Type: token.NOT_EQ,
+              Literal: literal,
+            };
+          } else {
+            tok = newToken(token.BANG, this.ch);
+          }
+          break;
+        case "/":
+          tok = newToken(token.SLASH, this.ch);
+          break;
+        case "*":
+          tok = newToken(token.ASTERISK, this.ch);
+          break;
+        case "<":
+          tok = newToken(token.LT, this.ch);
+          break;
+        case ">":
+          tok = newToken(token.GT, this.ch);
+          break;
+        case ";":
+          tok = newToken(token.SEMICOLON, this.ch);
+          break;
+        case ",":
+          tok = newToken(token.COMMA, this.ch);
+          break;
+        case "{":
+          tok = newToken(token.LBRACE, this.ch);
+          break;
+        case "}":
+          tok = newToken(token.RBRACE, this.ch);
+          break;
+        case "(":
+          tok = newToken(token.LPAREN, this.ch);
+          break;
+        case ")":
+          tok = newToken(token.RPAREN, this.ch);
+          break;
+        case '"':
           tok = {
-            Type: token.EQ,
-            Literal: literal,
+            Type: token.STRING,
+            Literal: this.readString(),
           };
-        } else {
-          tok = newToken(token.ASSIGN, this.ch);
-        }
-        break;
-      case "+":
-        tok = newToken(token.PLUS, this.ch);
-        break;
-      case "-":
-        tok = newToken(token.MINUS, this.ch);
-        break;
-      case "!":
-        if (this.peekChar() === "=") {
-          const ch = this.ch;
-          this.readChar();
-          const literal = `${ch}${this.ch}`;
-          tok = {
-            Type: token.NOT_EQ,
-            Literal: literal,
-          };
-        } else {
-          tok = newToken(token.BANG, this.ch);
-        }
-        break;
-      case "/":
-        tok = newToken(token.SLASH, this.ch);
-        break;
-      case "*":
-        tok = newToken(token.ASTERISK, this.ch);
-        break;
-      case "<":
-        tok = newToken(token.LT, this.ch);
-        break;
-      case ">":
-        tok = newToken(token.GT, this.ch);
-        break;
-      case ";":
-        tok = newToken(token.SEMICOLON, this.ch);
-        break;
-      case ",":
-        tok = newToken(token.COMMA, this.ch);
-        break;
-      case "{":
-        tok = newToken(token.LBRACE, this.ch);
-        break;
-      case "}":
-        tok = newToken(token.RBRACE, this.ch);
-        break;
-      case "(":
-        tok = newToken(token.LPAREN, this.ch);
-        break;
-      case ")":
-        tok = newToken(token.RPAREN, this.ch);
-        break;
-      case '"':
-        tok = {
-          Type: token.STRING,
-          Literal: this.readString(),
-        };
-        break;
-      case "[":
-        tok = newToken(token.LBRACKET, this.ch);
-        break;
-      case "]":
-        tok = newToken(token.RBRACKET, this.ch);
-        break;
-      case ":":
-        tok = newToken(token.COLON, this.ch);
-        break;
-      case 0:
-        tok = newToken(token.EOF, "");
-        break;
-      default:
-        if (isLetter(this.ch as string)) {
-          const literal = this.readIdentifier();
-          const type = token.lookupIdent(literal);
-          return {
-            Type: type,
-            Literal: literal,
-          };
-        } else if (isDigit(this.ch as string)) {
-          return {
-            Type: token.INT,
-            Literal: this.readNumber(),
-          };
-        } else {
-          tok = newToken(token.ILLEGAL, this.ch as string);
-        }
+          break;
+        case "[":
+          tok = newToken(token.LBRACKET, this.ch);
+          break;
+        case "]":
+          tok = newToken(token.RBRACKET, this.ch);
+          break;
+        case ":":
+          tok = newToken(token.COLON, this.ch);
+          break;
+        default:
+          if (isLetter(this.ch)) {
+            const literal = this.readIdentifier();
+            const type = token.lookupIdent(literal);
+            return {
+              Type: type,
+              Literal: literal,
+            };
+          } else if (isDigit(this.ch)) {
+            return {
+              Type: token.INT,
+              Literal: this.readNumber(),
+            };
+          } else {
+            tok = newToken(token.ILLEGAL, this.ch);
+          }
+      }
     }
 
     this.readChar();
