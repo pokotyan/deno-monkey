@@ -20,7 +20,7 @@ const isDigit = (ch: string) => {
   return ch.match(/[0-9]/);
 };
 
-class Lexer {
+export class Lexer {
   input: string; // コード
   position: number; // 入力における現在の位置（現在の文字を指し示す）
   readPosition: number; // これから読み込む位置（現在の文字の次）
