@@ -50,7 +50,7 @@ export class Lexer {
     const position = this.position;
 
     while (
-      isLetter(this.ch as string)
+      isLetter(this.ch)
     ) {
       this.readChar();
     }
@@ -61,7 +61,7 @@ export class Lexer {
   readNumber(): string {
     const position = this.position;
 
-    while (isDigit(this.ch as string)) {
+    while (isDigit(this.ch)) {
       this.readChar();
     }
     return this.input.slice(position, this.position);

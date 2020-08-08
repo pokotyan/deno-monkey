@@ -1,5 +1,6 @@
 import * as lexer from "../lexer/index.ts";
 import * as parser from "../parser/index.ts";
+import * as ev from "../evaluator/index.ts";
 
 const PROMPT = ">> ";
 
@@ -18,8 +19,11 @@ export const start = async () => {
       printParserErrors(p.errors);
       continue;
     }
+    const evaluated = ev.Eval(program);
 
-    console.log(program.String());
+    if (evaluated) {
+      console.log(evaluated.Inspect());
+    }
   }
 };
 

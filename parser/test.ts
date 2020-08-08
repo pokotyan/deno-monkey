@@ -20,8 +20,8 @@ const checkParserErrors = (parser: parser.Parser) => {
 const testLetStatement = (
   { stmt, name }: { stmt: ast.LetStatement; name: string },
 ) => {
-  assert.assertEquals(stmt.Name.Value, name);
-  assert.assertEquals(stmt.Name.TokenLiteral(), name);
+  assert.assertEquals((stmt.Name as ast.Identifier).Value, name);
+  assert.assertEquals((stmt.Name as ast.Identifier).TokenLiteral(), name);
 };
 
 const testLetStatements = () => {
@@ -54,7 +54,9 @@ const testLetStatements = () => {
 
     const letStmt = stmt as ast.LetStatement;
 
-    testLiteralExpression({ exp: letStmt.Value, expected: test.expectedValue });
+    testLiteralExpression(
+      { exp: letStmt.Value!, expected: test.expectedValue },
+    );
   }
 };
 
@@ -119,7 +121,7 @@ const testReturnStatements = () => {
     assert.assertEquals(stmt.TokenLiteral(), "return");
 
     testLiteralExpression(
-      { exp: stmt.ReturnValue, expected: test.expectedValue },
+      { exp: stmt.ReturnValue!, expected: test.expectedValue },
     );
   }
 };
@@ -178,7 +180,7 @@ const testParsingPrefixExpressions = () => {
     const exp = stmt.Expression as ast.PrefixExpression;
 
     assert.assertEquals(exp.Operator, test.operator);
-    testLiteralExpression({ exp: exp.Right, expected: test.value });
+    testLiteralExpression({ exp: exp.Right!, expected: test.value });
   }
 };
 
@@ -194,7 +196,7 @@ const testInfixExpression = (
 
   testLiteralExpression({ exp: opExp.Left, expected: left });
   assert.assertEquals(opExp.Operator, operator);
-  testLiteralExpression({ exp: opExp.Right, expected: right });
+  testLiteralExpression({ exp: opExp.Right!, expected: right });
 };
 
 const testParsingInfixExpressions = () => {
@@ -286,7 +288,7 @@ const testParsingInfixExpressions = () => {
     const stmt = program.Statements[0] as ast.ExpressionStatement;
 
     testInfixExpression({
-      exp: stmt.Expression,
+      exp: stmt.Expression!,
       left: test.leftValue,
       operator: test.operator,
       right: test.rightValue,
@@ -429,14 +431,14 @@ const testIfExpression = () => {
   const exp = stmt.Expression as ast.IfExpression;
 
   testInfixExpression(
-    { exp: exp.Condition, left: "x", operator: "<", right: "y" },
+    { exp: exp.Condition!, left: "x", operator: "<", right: "y" },
   );
 
-  assert.assertEquals(exp.Consequence.Statements.length, 1);
+  assert.assertEquals(exp.Consequence!.Statements.length, 1);
 
-  const consequence = exp.Consequence.Statements[0] as ast.ExpressionStatement;
+  const consequence = exp.Consequence!.Statements[0] as ast.ExpressionStatement;
 
-  testIdentifier({ exp: consequence.Expression, value: "x" });
+  testIdentifier({ exp: consequence.Expression!, value: "x" });
 
   assert.assertEquals(exp.Alternative, null);
 };
@@ -456,20 +458,20 @@ const testIfElseExpression = () => {
   const exp = stmt.Expression as ast.IfExpression;
 
   testInfixExpression(
-    { exp: exp.Condition, left: "x", operator: "<", right: "y" },
+    { exp: exp.Condition!, left: "x", operator: "<", right: "y" },
   );
 
-  assert.assertEquals(exp.Consequence.Statements.length, 1);
+  assert.assertEquals(exp.Consequence!.Statements.length, 1);
 
-  const consequence = exp.Consequence.Statements[0] as ast.ExpressionStatement;
+  const consequence = exp.Consequence!.Statements[0] as ast.ExpressionStatement;
 
-  testIdentifier({ exp: consequence.Expression, value: "x" });
+  testIdentifier({ exp: consequence.Expression!, value: "x" });
 
-  assert.assertEquals(exp.Alternative.Statements.length, 1);
+  assert.assertEquals(exp.Alternative!.Statements.length, 1);
 
-  const alternative = exp.Alternative.Statements[0] as ast.ExpressionStatement;
+  const alternative = exp.Alternative!.Statements[0] as ast.ExpressionStatement;
 
-  testIdentifier({ exp: alternative.Expression, value: "y" });
+  testIdentifier({ exp: alternative.Expression!, value: "y" });
 };
 
 const testFunctionLiteralParsing = () => {
@@ -490,11 +492,11 @@ const testFunctionLiteralParsing = () => {
   testLiteralExpression({ exp: func.Parameters[0], expected: "x" });
   testLiteralExpression({ exp: func.Parameters[1], expected: "y" });
 
-  assert.assertEquals(func.Body.Statements.length, 1);
+  assert.assertEquals(func.Body!.Statements.length, 1);
 
-  const body = func.Body.Statements[0] as ast.ExpressionStatement;
+  const body = func.Body!.Statements[0] as ast.ExpressionStatement;
   testInfixExpression(
-    { exp: body.Expression, left: "x", operator: "+", right: "y" },
+    { exp: body.Expression!, left: "x", operator: "+", right: "y" },
   );
 };
 
@@ -558,14 +560,14 @@ const testCallExpressionParsing = () => {
 };
 
 testLetStatements();
-// testReturnStatements();
-// testIdentifierExpression();
-// testIntegerLiteralExpression();
-// testParsingPrefixExpressions();
-// testParsingInfixExpressions();
-// testOperatorPrecedenceParsing();
-// testIfExpression();
-// testIfElseExpression();
-// testFunctionLiteralParsing();
-// testFunctionParameterParsing();
-// testCallExpressionParsing();
+testReturnStatements();
+testIdentifierExpression();
+testIntegerLiteralExpression();
+testParsingPrefixExpressions();
+testParsingInfixExpressions();
+testOperatorPrecedenceParsing();
+testIfExpression();
+testIfElseExpression();
+testFunctionLiteralParsing();
+testFunctionParameterParsing();
+testCallExpressionParsing();

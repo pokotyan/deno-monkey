@@ -79,33 +79,33 @@ export type TOKEN = {
   RETURN: "RETURN";
 };
 
-export type PREFIX_TOKEN = {
-  IDENT: "IDENT";
-  INT: "INT";
-  STRING: "STRING";
-  MINUS: "-";
-  BANG: "!";
-  LPAREN: "(";
-  LBRACE: "{";
-  LBRACKET: "[";
-  FUNCTION: "FUNCTION";
-  TRUE: "TRUE";
-  FALSE: "FALSE";
-  IF: "IF";
-};
+// export type PREFIX_TOKEN = {
+//   IDENT: "IDENT";
+//   INT: "INT";
+//   STRING: "STRING";
+//   MINUS: "-";
+//   BANG: "!";
+//   LPAREN: "(";
+//   LBRACE: "{";
+//   LBRACKET: "[";
+//   FUNCTION: "FUNCTION";
+//   TRUE: "TRUE";
+//   FALSE: "FALSE";
+//   IF: "IF";
+// };
 
-export type INFIX_TOKEN = {
-  PLUS: "+";
-  MINUS: "-";
-  ASTERISK: "*";
-  SLASH: "/";
-  LT: "<";
-  GT: ">";
-  EQ: "==";
-  NOT_EQ: "!=";
-  LPAREN: "(";
-  LBRACKET: "[";
-};
+// export type INFIX_TOKEN = {
+//   PLUS: "+";
+//   MINUS: "-";
+//   ASTERISK: "*";
+//   SLASH: "/";
+//   LT: "<";
+//   GT: ">";
+//   EQ: "==";
+//   NOT_EQ: "!=";
+//   LPAREN: "(";
+//   LBRACKET: "[";
+// };
 
 export type Token = {
   Type: TokenType;

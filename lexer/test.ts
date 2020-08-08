@@ -1,6 +1,6 @@
+import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 import * as lexer from "./index.ts";
 import * as token from "../token/index.ts";
-import { assertEquals } from "https://deno.land/std/testing/asserts.ts";
 
 const testNextToken = () => {
   const input = `let five = 5;

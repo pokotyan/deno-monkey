@@ -1,7 +1,6 @@
 import * as token from "../token/index.ts";
 import * as lexer from "../lexer/index.ts";
 import * as ast from "../ast/index.ts";
-import * as util from "../util/index.ts";
 
 enum priority {
   LOWEST,
@@ -15,7 +14,9 @@ enum priority {
 }
 
 // 優先順位。下に行くほど優先順位高。
-const precedences = {
+const precedences: {
+  [k: string]: priority;
+} = {
   [token.EQ]: priority.EQUALS,
   [token.NOT_EQ]: priority.EQUALS,
   [token.LT]: priority.LESSGREATER,
@@ -26,7 +27,7 @@ const precedences = {
   [token.ASTERISK]: priority.PRODUCT,
   [token.LPAREN]: priority.CALL,
   [token.LBRACKET]: priority.INDEX,
-} as any;
+};
 
 export class Parser {
   l: lexer.Lexer;
@@ -37,48 +38,44 @@ export class Parser {
   constructor(lexer: lexer.Lexer) {
     this.l = lexer;
     this.errors = [];
-    this.curToken = null as unknown as token.Token;
-    this.peekToken = null as unknown as token.Token;
+    this.curToken = null!;
+    this.peekToken = null!;
   }
 
   getPrefixParseFn(tokenType: token.TokenType) {
     const prefixParseFns: {
-      [k in keyof token.PREFIX_TOKEN]: (p: Parser) => ast.Expression;
+      [k in string]: (p: Parser) => ast.Expression | null;
     } = {
       [token.IDENT]: parseIdentifier,
       [token.INT]: parseIntegerLiteral,
-      [token.BANG as any]: parsePrefixExpression,
-      [token.MINUS as any]: parsePrefixExpression,
-      [token.TRUE as any]: parseBoolean,
-      [token.FALSE as any]: parseBoolean,
-      [token.LPAREN as any]: parseGroupedExpression,
-      [token.IF as any]: parseIfExpression,
-      [token.FUNCTION as any]: parseFunctionLiteral,
-    } as {
-      [k in keyof token.PREFIX_TOKEN]: (p: Parser) => ast.Expression;
+      [token.BANG]: parsePrefixExpression,
+      [token.MINUS]: parsePrefixExpression,
+      [token.TRUE]: parseBoolean,
+      [token.FALSE]: parseBoolean,
+      [token.LPAREN]: parseGroupedExpression,
+      [token.IF]: parseIfExpression,
+      [token.FUNCTION]: parseFunctionLiteral,
     };
 
-    return util.getProp(prefixParseFns, tokenType as any);
+    return prefixParseFns[tokenType];
   }
 
   getInfixParseFn(tokenType: token.TokenType) {
     const infixParseFns: {
-      [k in keyof token.INFIX_TOKEN]: any;
+      [k: string]: (p: Parser, exp: ast.Expression) => ast.Expression;
     } = {
-      [token.PLUS as any]: parseInfixExpression,
-      [token.MINUS as any]: parseInfixExpression,
-      [token.SLASH as any]: parseInfixExpression,
-      [token.ASTERISK as any]: parseInfixExpression,
-      [token.EQ as any]: parseInfixExpression,
-      [token.NOT_EQ as any]: parseInfixExpression,
-      [token.LT as any]: parseInfixExpression,
-      [token.GT as any]: parseInfixExpression,
-      [token.LPAREN as any]: parseCallExpression,
-    } as {
-      [k in keyof token.INFIX_TOKEN]: any;
+      [token.PLUS]: parseInfixExpression,
+      [token.MINUS]: parseInfixExpression,
+      [token.SLASH]: parseInfixExpression,
+      [token.ASTERISK]: parseInfixExpression,
+      [token.EQ]: parseInfixExpression,
+      [token.NOT_EQ]: parseInfixExpression,
+      [token.LT]: parseInfixExpression,
+      [token.GT]: parseInfixExpression,
+      [token.LPAREN]: parseCallExpression,
     };
 
-    return util.getProp(infixParseFns, tokenType as any);
+    return infixParseFns[tokenType];
   }
 
   curTokenIs(tokenType: token.TokenType): boolean {
@@ -90,7 +87,7 @@ export class Parser {
   }
 
   // 次のトークンの優先順位を確認。なければ最低の優先順位をデフォで返す。
-  peekPrecedence(): number {
+  peekPrecedence(): priority {
     if (this.peekToken.Type in precedences) {
       return precedences[this.peekToken.Type];
     }
@@ -99,7 +96,7 @@ export class Parser {
   }
 
   // 現在のトークンの優先順位を確認。なければ最低の優先順位をデフォで返す。
-  curPrecedence(): number {
+  curPrecedence(): priority {
     if (this.curToken.Type in precedences) {
       return precedences[this.curToken.Type];
     }
@@ -167,7 +164,7 @@ export class Parser {
     }
     this.nextToken();
 
-    stmt.Value = this.parseExpression(priority.LOWEST) as ast.Expression;
+    stmt.Value = this.parseExpression(priority.LOWEST)!;
 
     // 次が ; だったら
     if (this.peekTokenIs(token.SEMICOLON)) {
@@ -184,7 +181,7 @@ export class Parser {
 
     this.nextToken();
 
-    stmt.ReturnValue = this.parseExpression(priority.LOWEST) as ast.Expression;
+    stmt.ReturnValue = this.parseExpression(priority.LOWEST)!;
 
     while (!this.curTokenIs(token.SEMICOLON)) {
       this.nextToken();
@@ -196,7 +193,7 @@ export class Parser {
   parseExpressionStatement(): ast.ExpressionStatement {
     const stmt = new ast.ExpressionStatement(this.curToken);
 
-    stmt.Expression = this.parseExpression(priority.LOWEST) as ast.Expression;
+    stmt.Expression = this.parseExpression(priority.LOWEST)!;
 
     if (this.peekTokenIs(token.SEMICOLON)) {
       this.nextToken();
@@ -217,16 +214,14 @@ export class Parser {
     while (
       !this.peekTokenIs(token.SEMICOLON) && priority < this.peekPrecedence()
     ) {
-      const infix = this.getInfixParseFn(this.peekToken.Type) as
-        | typeof parseInfixExpression
-        | undefined;
+      const infix = this.getInfixParseFn(this.peekToken.Type);
 
       if (!infix) {
         return leftExp;
       }
       this.nextToken();
 
-      leftExp = infix(this, leftExp);
+      leftExp = infix(this, leftExp!);
     }
 
     return leftExp;
@@ -253,7 +248,7 @@ const parseIntegerLiteral = (p: Parser): ast.Expression => {
 
   if (typeof value === undefined) {
     p.errors.push(`could not parse ${p.curToken.Literal} as integer`);
-    return null as unknown as ast.Expression;
+    return null!;
   }
 
   literal.Value = value;
@@ -267,7 +262,7 @@ const parsePrefixExpression = (p: Parser): ast.Expression => {
 
   p.nextToken();
 
-  exp.Right = p.parseExpression(priority.PREFIX) as ast.Expression;
+  exp.Right = p.parseExpression(priority.PREFIX)!;
   return exp;
 };
 
@@ -280,7 +275,7 @@ const parseInfixExpression = (
   );
   const precedence = p.curPrecedence();
   p.nextToken();
-  exp.Right = p.parseExpression(precedence) as ast.Expression;
+  exp.Right = p.parseExpression(precedence)!;
 
   return exp;
 };
@@ -294,7 +289,7 @@ const parseBoolean = (p: Parser): ast.Expression => {
 const parseGroupedExpression = (p: Parser): ast.Expression | null => {
   p.nextToken();
 
-  const exp = p.parseExpression(priority.LOWEST) as ast.Expression;
+  const exp = p.parseExpression(priority.LOWEST)!;
 
   if (!p.expectPeek(token.RPAREN)) {
     return null;
@@ -329,7 +324,7 @@ const parseIfExpression = (p: Parser): ast.Expression | null => {
 
   p.nextToken();
 
-  exp.Condition = p.parseExpression(priority.LOWEST) as ast.Expression;
+  exp.Condition = p.parseExpression(priority.LOWEST)!;
 
   if (!p.expectPeek(token.RPAREN)) {
     return null;
@@ -355,7 +350,7 @@ const parseIfExpression = (p: Parser): ast.Expression | null => {
 };
 
 const parseFunctionParameters = (p: Parser): ast.Identifier[] | null => {
-  const identifiers = [] as ast.Identifier[];
+  const identifiers: ast.Identifier[] = [];
 
   if (p.peekTokenIs(token.RPAREN)) {
     p.nextToken();
@@ -392,7 +387,7 @@ const parseFunctionLiteral = (p: Parser): ast.Expression | null => {
     return null;
   }
 
-  lit.Parameters = parseFunctionParameters(p) as ast.Identifier[];
+  lit.Parameters = parseFunctionParameters(p)!;
 
   if (!p.expectPeek(token.LBRACE)) {
     return null;
@@ -406,19 +401,19 @@ const parseFunctionLiteral = (p: Parser): ast.Expression | null => {
 const parseExpressionList = (
   { p, end }: { p: Parser; end: token.TokenType },
 ): ast.Expression[] | null => {
-  const list = [] as ast.Expression[];
+  const list: ast.Expression[] = [];
   if (p.peekTokenIs(end)) {
     p.nextToken();
     return list;
   }
 
   p.nextToken();
-  list.push(p.parseExpression(priority.LOWEST) as ast.Expression);
+  list.push(p.parseExpression(priority.LOWEST)!);
 
   while (p.peekTokenIs(token.COMMA)) {
     p.nextToken();
     p.nextToken();
-    list.push(p.parseExpression(priority.LOWEST) as ast.Expression);
+    list.push(p.parseExpression(priority.LOWEST)!);
   }
 
   if (!p.expectPeek(end)) {
@@ -434,7 +429,7 @@ const parseCallExpression = (
   const exp = new ast.CallExpression({ token: p.curToken, func });
   exp.Arguments = parseExpressionList(
     { p, end: token.RPAREN },
-  ) as ast.Expression[];
+  )!;
 
   return exp;
 };

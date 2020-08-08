@@ -1,8 +1,10 @@
 import * as token from "../token/index.ts";
+import * as ast from "../ast/index.ts";
 
 export interface Node {
   TokenLiteral(): string;
-  String(): void;
+  String(): string;
+  Constructor(): Function;
 }
 
 export interface Statement extends Node {
@@ -13,14 +15,18 @@ export interface Expression extends Node {
   expressionNode(): any;
 }
 
-export class Program {
+export class Program implements Node {
   Statements: Statement[];
 
   constructor() {
     this.Statements = [];
   }
 
-  tokenLiteral() {
+  Constructor() {
+    return this.constructor;
+  }
+
+  TokenLiteral() {
     if (this.Statements.length) {
       return this.Statements[0].TokenLiteral();
     } else {
@@ -42,13 +48,17 @@ export class Program {
 // -------------------
 export class LetStatement implements Statement {
   Token: token.Token;
-  Name: Identifier;
-  Value: Expression;
+  Name: Identifier | string;
+  Value: Expression | null;
 
   constructor(token: token.Token) {
     this.Token = token;
-    this.Name = "" as any;
-    this.Value = null as any;
+    this.Name = "";
+    this.Value = null;
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
@@ -58,7 +68,9 @@ export class LetStatement implements Statement {
   statementNode() {}
 
   String() {
-    let str = `${this.TokenLiteral()} ${this.Name.String()} = `;
+    let str = `${this.TokenLiteral()} ${
+      (this.Name as ast.Identifier).String()
+    } = `;
 
     if (this.Value) {
       // Expression
@@ -73,11 +85,15 @@ export class LetStatement implements Statement {
 
 export class ReturnStatement implements Statement {
   Token: token.Token;
-  ReturnValue: Expression;
+  ReturnValue: Expression | null;
 
   constructor(token: token.Token) {
     this.Token = token;
-    this.ReturnValue = null as any;
+    this.ReturnValue = null;
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
@@ -90,7 +106,6 @@ export class ReturnStatement implements Statement {
     let str = `${this.TokenLiteral()} `;
 
     if (this.ReturnValue) {
-      // Expression
       str += this.ReturnValue.String();
     }
 
@@ -102,11 +117,15 @@ export class ReturnStatement implements Statement {
 
 export class ExpressionStatement implements Statement {
   Token: token.Token;
-  Expression: Expression;
+  Expression: Expression | null;
 
   constructor(token: token.Token) {
     this.Token = token;
-    this.Expression = null as any;
+    this.Expression = null;
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
@@ -135,6 +154,10 @@ export class Identifier implements Expression {
     this.Value = value;
   }
 
+  Constructor() {
+    return this.constructor;
+  }
+
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -155,6 +178,10 @@ export class IntegerLiteral implements Expression {
     this.Value = 0;
   }
 
+  Constructor() {
+    return this.constructor;
+  }
+
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -169,12 +196,16 @@ export class IntegerLiteral implements Expression {
 export class PrefixExpression implements Expression {
   Token: token.Token;
   Operator: string;
-  Right: Expression;
+  Right: Expression | null;
 
   constructor({ token, operator }: { token: token.Token; operator: string }) {
     this.Token = token;
     this.Operator = operator;
-    this.Right = null as any;
+    this.Right = null;
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
@@ -184,7 +215,7 @@ export class PrefixExpression implements Expression {
   expressionNode() {}
 
   String() {
-    const str = `(${this.Operator}${this.Right.String()})`;
+    const str = `(${this.Operator}${this.Right!.String()})`;
     return str;
   }
 }
@@ -193,7 +224,7 @@ export class InfixExpression implements Expression {
   Token: token.Token;
   Left: Expression;
   Operator: string;
-  Right: Expression;
+  Right: Expression | null;
 
   constructor(
     { token, operator, left }: {
@@ -205,7 +236,11 @@ export class InfixExpression implements Expression {
     this.Token = token;
     this.Operator = operator;
     this.Left = left;
-    this.Right = null as any;
+    this.Right = null;
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
@@ -215,8 +250,9 @@ export class InfixExpression implements Expression {
   expressionNode() {}
 
   String() {
-    const str =
-      `(${this.Left.String()} ${this.Operator} ${this.Right.String()})`;
+    const str = `(${this.Left.String()} ${this.Operator} ${
+      this.Right!.String()
+    })`;
     return str;
   }
 }
@@ -233,6 +269,10 @@ export class Boolean implements Expression {
   ) {
     this.Token = token;
     this.Value = value;
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
@@ -255,6 +295,10 @@ export class BlockStatement implements Expression {
     this.Statements = [];
   }
 
+  Constructor() {
+    return this.constructor;
+  }
+
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -273,15 +317,19 @@ export class BlockStatement implements Expression {
 // if (<condition>) <consequence> else <alternative>
 export class IfExpression implements Expression {
   Token: token.Token;
-  Condition: Expression;
-  Consequence: BlockStatement;
-  Alternative: BlockStatement;
+  Condition: Expression | null;
+  Consequence: BlockStatement | null;
+  Alternative: BlockStatement | null;
 
   constructor(token: token.Token) {
     this.Token = token;
-    this.Condition = null as any;
-    this.Consequence = null as any;
-    this.Alternative = null as any;
+    this.Condition = null;
+    this.Consequence = null;
+    this.Alternative = null;
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
@@ -291,7 +339,7 @@ export class IfExpression implements Expression {
   expressionNode() {}
 
   String() {
-    let str = `if${this.Condition.String()} ${this.Consequence.String()}`;
+    let str = `if${this.Condition!.String()} ${this.Consequence!.String()}`;
 
     if (this.Alternative) {
       str += `else ${this.Alternative.String()}`;
@@ -305,12 +353,16 @@ export class IfExpression implements Expression {
 export class FunctionLiteral implements Expression {
   Token: token.Token;
   Parameters: Identifier[];
-  Body: BlockStatement;
+  Body: BlockStatement | null;
 
   constructor(token: token.Token) {
     this.Token = token;
     this.Parameters = [];
-    this.Body = null as any;
+    this.Body = null;
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
@@ -325,7 +377,7 @@ export class FunctionLiteral implements Expression {
       params += `${param.String()}, `;
     }
 
-    let str = `${this.TokenLiteral()}(${params}) ${this.Body.String()}`;
+    let str = `${this.TokenLiteral()}(${params}) ${this.Body!.String()}`;
 
     return str;
   }
@@ -343,6 +395,10 @@ export class CallExpression implements Expression {
     this.Token = token;
     this.Function = func;
     this.Arguments = [];
+  }
+
+  Constructor() {
+    return this.constructor;
   }
 
   TokenLiteral() {
