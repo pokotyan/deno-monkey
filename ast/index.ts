@@ -353,7 +353,6 @@ export class CallExpression implements Expression {
 
   String() {
     let args = "";
-    console.log(this);
 
     this.Arguments.forEach((arg, i) => {
       const lastIndex = Math.max(this.Arguments.length - 1, 0);
