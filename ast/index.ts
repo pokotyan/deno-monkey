@@ -4,7 +4,6 @@ import * as ast from "../ast/index.ts";
 export interface Node {
   TokenLiteral(): string;
   String(): string;
-  Constructor(): Function;
 }
 
 export interface Statement extends Node {
@@ -20,10 +19,6 @@ export class Program implements Node {
 
   constructor() {
     this.Statements = [];
-  }
-
-  Constructor() {
-    return this.constructor;
   }
 
   TokenLiteral() {
@@ -57,10 +52,6 @@ export class LetStatement implements Statement {
     this.Value = null;
   }
 
-  Constructor() {
-    return this.constructor;
-  }
-
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -92,10 +83,6 @@ export class ReturnStatement implements Statement {
     this.ReturnValue = null;
   }
 
-  Constructor() {
-    return this.constructor;
-  }
-
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -124,10 +111,6 @@ export class ExpressionStatement implements Statement {
     this.Expression = null;
   }
 
-  Constructor() {
-    return this.constructor;
-  }
-
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -154,10 +137,6 @@ export class Identifier implements Expression {
     this.Value = value;
   }
 
-  Constructor() {
-    return this.constructor;
-  }
-
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -176,10 +155,6 @@ export class IntegerLiteral implements Expression {
   constructor(token: token.Token) {
     this.Token = token;
     this.Value = 0;
-  }
-
-  Constructor() {
-    return this.constructor;
   }
 
   TokenLiteral() {
@@ -202,10 +177,6 @@ export class PrefixExpression implements Expression {
     this.Token = token;
     this.Operator = operator;
     this.Right = null;
-  }
-
-  Constructor() {
-    return this.constructor;
   }
 
   TokenLiteral() {
@@ -239,10 +210,6 @@ export class InfixExpression implements Expression {
     this.Right = null;
   }
 
-  Constructor() {
-    return this.constructor;
-  }
-
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -271,10 +238,6 @@ export class Boolean implements Expression {
     this.Value = value;
   }
 
-  Constructor() {
-    return this.constructor;
-  }
-
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -293,10 +256,6 @@ export class BlockStatement implements Expression {
   constructor(token: token.Token) {
     this.Token = token;
     this.Statements = [];
-  }
-
-  Constructor() {
-    return this.constructor;
   }
 
   TokenLiteral() {
@@ -328,10 +287,6 @@ export class IfExpression implements Expression {
     this.Alternative = null;
   }
 
-  Constructor() {
-    return this.constructor;
-  }
-
   TokenLiteral() {
     return this.Token.Literal;
   }
@@ -359,10 +314,6 @@ export class FunctionLiteral implements Expression {
     this.Token = token;
     this.Parameters = [];
     this.Body = null;
-  }
-
-  Constructor() {
-    return this.constructor;
   }
 
   TokenLiteral() {
@@ -395,10 +346,6 @@ export class CallExpression implements Expression {
     this.Token = token;
     this.Function = func;
     this.Arguments = [];
-  }
-
-  Constructor() {
-    return this.constructor;
   }
 
   TokenLiteral() {

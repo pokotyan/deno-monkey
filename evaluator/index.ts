@@ -5,34 +5,41 @@ const TRUE = new obj.Bool(true);
 const FALSE = new obj.Bool(false);
 const NULL = new obj.Null();
 
+const isProgram = (node: ast.Node): node is ast.Program =>
+  node instanceof ast.Program;
+
+const isExpressionStatement = (
+  node: ast.Node,
+): node is ast.ExpressionStatement => node instanceof ast.ExpressionStatement;
+
+const isIntegerLiteral = (node: ast.Node): node is ast.IntegerLiteral =>
+  node instanceof ast.IntegerLiteral;
+
+const isBoolean = (node: ast.Node): node is ast.Boolean =>
+  node instanceof ast.Boolean;
+
+const isPrefixExpression = (node: ast.Node): node is ast.PrefixExpression =>
+  node instanceof ast.PrefixExpression;
+
+// const isInfixExpression = (node: ast.Node): node is ast.InfixExpression =>
+//   node instanceof ast.InfixExpression;
+
 export const Eval = (node: ast.Node): obj.Object => {
-  switch (node.Constructor()) {
-    case ast.Program:
-      const progamNode = node as ast.Program;
-
-      return evalStatements(progamNode.Statements);
-    case ast.ExpressionStatement:
-      const expNode = node as ast.ExpressionStatement;
-
-      return Eval(expNode.Expression!);
-    case ast.IntegerLiteral:
-      const intNode = node as ast.IntegerLiteral;
-
-      return new obj.Integer(intNode.Value);
-    case ast.Boolean:
-      const boolNode = node as ast.Boolean;
-
-      return nativeBoolToBooleanObject(boolNode.Value);
-    case ast.PrefixExpression:
-      const peNode = (node as ast.PrefixExpression);
-      const right = Eval(peNode.Right!);
-
-      return evalPrefixExpression({ operator: peNode.Operator, right });
+  if (isProgram(node)) {
+    return evalStatements(node.Statements);
+  } else if (isExpressionStatement(node)) {
+    return Eval(node.Expression!);
+  } else if (isIntegerLiteral(node)) {
+    return new obj.Integer(node.Value);
+  } else if (isBoolean(node)) {
+    return nativeBoolToBooleanObject(node.Value);
+  } else if (isPrefixExpression(node)) {
+    const right = Eval(node.Right!);
+    return evalPrefixExpression({ operator: node.Operator, right });
     // TODO 次はここ
-    // case ast.InfixExpression:
-    //   const ieNode = (node as ast.InfixExpression);
-    default:
-      return null as any;
+    // } else if (isInfixExpression(node)) {
+  } else {
+    return null as any;
   }
 };
 
