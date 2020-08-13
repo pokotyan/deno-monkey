@@ -1,10 +1,13 @@
 import * as lexer from "../lexer/index.ts";
 import * as parser from "../parser/index.ts";
 import * as ev from "../evaluator/index.ts";
+import * as env from "../object/environment.ts";
 
 const PROMPT = ">> ";
 
 export const start = async () => {
+  const environment = env.NewEnvironment();
+
   while (true) {
     const buf = new Uint8Array(1024);
     await Deno.stdout.write(new TextEncoder().encode(PROMPT));
@@ -19,7 +22,7 @@ export const start = async () => {
       printParserErrors(p.errors);
       continue;
     }
-    const evaluated = ev.Eval(program);
+    const evaluated = ev.Eval(program, environment);
 
     if (evaluated) {
       console.log(evaluated.Inspect());

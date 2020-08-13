@@ -1,5 +1,5 @@
-import * as token from "../token/index.ts";
 import * as ast from "../ast/index.ts";
+import * as token from "../token/index.ts";
 
 export interface Node {
   TokenLiteral(): string;
@@ -59,9 +59,8 @@ export class LetStatement implements Statement {
   statementNode() {}
 
   String() {
-    let str = `${this.TokenLiteral()} ${
-      (this.Name as ast.Identifier).String()
-    } = `;
+    let str = `${this.TokenLiteral()} ${(this
+      .Name as ast.Identifier).String()} = `;
 
     if (this.Value) {
       // Expression
@@ -197,13 +196,15 @@ export class InfixExpression implements Expression {
   Operator: string;
   Right: Expression | null;
 
-  constructor(
-    { token, operator, left }: {
-      token: token.Token;
-      operator: string;
-      left: Expression;
-    },
-  ) {
+  constructor({
+    token,
+    operator,
+    left,
+  }: {
+    token: token.Token;
+    operator: string;
+    left: Expression;
+  }) {
     this.Token = token;
     this.Operator = operator;
     this.Left = left;
@@ -217,9 +218,9 @@ export class InfixExpression implements Expression {
   expressionNode() {}
 
   String() {
-    const str = `(${this.Left.String()} ${this.Operator} ${
-      this.Right!.String()
-    })`;
+    const str = `(${this.Left.String()} ${
+      this.Operator
+    } ${this.Right!.String()})`;
     return str;
   }
 }
@@ -228,12 +229,7 @@ export class Boolean implements Expression {
   Token: token.Token;
   Value: boolean;
 
-  constructor(
-    { token, value }: {
-      token: token.Token;
-      value: boolean;
-    },
-  ) {
+  constructor({ token, value }: { token: token.Token; value: boolean }) {
     this.Token = token;
     this.Value = value;
   }
@@ -367,6 +363,125 @@ export class CallExpression implements Expression {
     });
 
     let str = `${this.Function.String()}(${args})`;
+
+    return str;
+  }
+}
+
+export class StringLiteral implements Expression {
+  Token: token.Token;
+  Value: string;
+
+  constructor({ token, value }: { token: token.Token; value: string }) {
+    this.Token = token;
+    this.Value = value;
+  }
+
+  TokenLiteral() {
+    return this.Token.Literal;
+  }
+
+  expressionNode() {}
+
+  String() {
+    return this.Token.Literal;
+  }
+}
+
+export class ArrayLiteral implements Expression {
+  Token: token.Token;
+  Elements: Expression[];
+
+  constructor(token: token.Token) {
+    this.Token = token;
+    this.Elements = [];
+  }
+
+  TokenLiteral() {
+    return this.Token.Literal;
+  }
+
+  expressionNode() {}
+
+  String() {
+    let elems = "";
+
+    this.Elements.forEach((elem, i) => {
+      const lastIndex = Math.max(this.Elements.length - 1, 0);
+      if (i === lastIndex) {
+        elems += `${elem.String()}`;
+      } else {
+        elems += `${elem.String()}, `;
+      }
+    });
+
+    let str = `[${elems}]`;
+
+    return str;
+  }
+}
+
+// 添字。
+// [1,2,3,4][2]
+// myArray[2]
+// myArray[2 + 1]
+// returnArray()[1]
+export class IndexExpression implements Expression {
+  Token: token.Token;
+  Left: Expression;
+  Index: Expression | null;
+
+  constructor({ token, left }: { token: token.Token; left: Expression }) {
+    this.Token = token;
+    this.Left = left;
+    this.Index = null;
+  }
+
+  TokenLiteral() {
+    return this.Token.Literal;
+  }
+
+  expressionNode() {}
+
+  String() {
+    let str = `(${this.Left.String()}[${this.Index!.String()}])`;
+
+    return str;
+  }
+}
+
+export class HashLiteral implements Expression {
+  Token: token.Token;
+  Pairs: {
+    [k: string]: Expression; // キーはint、string、boolノードのString()
+  };
+
+  constructor(token: token.Token) {
+    this.Token = token;
+    this.Pairs = {};
+  }
+
+  TokenLiteral() {
+    return this.Token.Literal;
+  }
+
+  expressionNode() {}
+
+  String() {
+    let pairs = "";
+
+    Object.keys(this.Pairs).forEach((key, i) => {
+      const k = (key as unknown) as ast.Expression;
+      const value = this.Pairs[key];
+      const lastIndex = Math.max(Object.keys(this.Pairs).length - 1, 0);
+      if (i === lastIndex) {
+        pairs += `${k.String()}:${value.String()}`;
+      } else {
+        pairs += `${k.String()}:${value.String()}, `;
+      }
+    });
+
+    let str = `{${pairs}}`;
 
     return str;
   }

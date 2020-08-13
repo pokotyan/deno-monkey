@@ -1,17 +1,5 @@
 import * as token from "../token/index.ts";
 
-const bufferFrom = (code: string) => {
-  const encoder = new TextEncoder();
-  const buffer = encoder.encode(code);
-
-  return buffer;
-};
-
-const decode = (buffer: Uint8Array) => {
-  const decoder = new TextDecoder();
-  return decoder.decode(buffer);
-};
-
 const isLetter = (ch: string) => {
   return ch.match(/[A-Za-z_]/);
 };
@@ -49,9 +37,7 @@ export class Lexer {
   readIdentifier(): string {
     const position = this.position;
 
-    while (
-      isLetter(this.ch)
-    ) {
+    while (isLetter(this.ch)) {
       this.readChar();
     }
 
@@ -201,7 +187,8 @@ export class Lexer {
   skipWhitespace() {
     // 現在が、空白、tab、改行なら読み進める。
     while (
-      this.ch === " " || this.ch === "\t" ||
+      this.ch === " " ||
+      this.ch === "\t" ||
       this.ch === "\n" ||
       this.ch === "\r"
     ) {

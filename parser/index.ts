@@ -48,6 +48,7 @@ export class Parser {
     } = {
       [token.IDENT]: parseIdentifier,
       [token.INT]: parseIntegerLiteral,
+      [token.STRING]: parseStringLiteral,
       [token.BANG]: parsePrefixExpression,
       [token.MINUS]: parsePrefixExpression,
       [token.TRUE]: parseBoolean,
@@ -55,6 +56,8 @@ export class Parser {
       [token.LPAREN]: parseGroupedExpression,
       [token.IF]: parseIfExpression,
       [token.FUNCTION]: parseFunctionLiteral,
+      [token.LBRACKET]: parseArrayLiteral,
+      [token.LBRACE]: parseHashLiteral,
     };
 
     return prefixParseFns[tokenType];
@@ -72,7 +75,8 @@ export class Parser {
       [token.NOT_EQ]: parseInfixExpression,
       [token.LT]: parseInfixExpression,
       [token.GT]: parseInfixExpression,
-      [token.LPAREN]: parseCallExpression,
+      [token.LPAREN]: parseCallExpression, // 関数呼び出し
+      [token.LBRACKET]: parseIndexExpression, // 添字
     };
 
     return infixParseFns[tokenType];
@@ -115,8 +119,7 @@ export class Parser {
   }
 
   peekError(tokenType: token.TokenType) {
-    const msg =
-      `expected next token to be ${tokenType}, got ${this.peekToken.Type} instead`;
+    const msg = `expected next token to be ${tokenType}, got ${this.peekToken.Type} instead`;
     this.errors.push(msg);
   }
 
@@ -155,9 +158,10 @@ export class Parser {
       return null;
     }
 
-    stmt.Name = new ast.Identifier(
-      { token: this.curToken, value: this.curToken.Literal },
-    );
+    stmt.Name = new ast.Identifier({
+      token: this.curToken,
+      value: this.curToken.Literal,
+    });
 
     if (!this.expectPeek(token.ASSIGN)) {
       return null;
@@ -212,7 +216,8 @@ export class Parser {
     let leftExp = prefix(this);
 
     while (
-      !this.peekTokenIs(token.SEMICOLON) && priority < this.peekPrecedence()
+      !this.peekTokenIs(token.SEMICOLON) &&
+      priority < this.peekPrecedence()
     ) {
       const infix = this.getInfixParseFn(this.peekToken.Type);
 
@@ -256,9 +261,10 @@ const parseIntegerLiteral = (p: Parser): ast.Expression => {
 };
 
 const parsePrefixExpression = (p: Parser): ast.Expression => {
-  const exp = new ast.PrefixExpression(
-    { token: p.curToken, operator: p.curToken.Literal },
-  );
+  const exp = new ast.PrefixExpression({
+    token: p.curToken,
+    operator: p.curToken.Literal,
+  });
 
   p.nextToken();
 
@@ -268,11 +274,13 @@ const parsePrefixExpression = (p: Parser): ast.Expression => {
 
 const parseInfixExpression = (
   p: Parser,
-  left: ast.Expression,
+  left: ast.Expression
 ): ast.Expression => {
-  const exp = new ast.InfixExpression(
-    { token: p.curToken, operator: p.curToken.Literal, left },
-  );
+  const exp = new ast.InfixExpression({
+    token: p.curToken,
+    operator: p.curToken.Literal,
+    left,
+  });
   const precedence = p.curPrecedence();
   p.nextToken();
   exp.Right = p.parseExpression(precedence)!;
@@ -281,9 +289,10 @@ const parseInfixExpression = (
 };
 
 const parseBoolean = (p: Parser): ast.Expression => {
-  return new ast.Boolean(
-    { token: p.curToken, value: p.curTokenIs(token.TRUE) },
-  );
+  return new ast.Boolean({
+    token: p.curToken,
+    value: p.curTokenIs(token.TRUE),
+  });
 };
 
 const parseGroupedExpression = (p: Parser): ast.Expression | null => {
@@ -359,17 +368,19 @@ const parseFunctionParameters = (p: Parser): ast.Identifier[] | null => {
 
   p.nextToken();
 
-  const ident = new ast.Identifier(
-    { token: p.curToken, value: p.curToken.Literal },
-  );
+  const ident = new ast.Identifier({
+    token: p.curToken,
+    value: p.curToken.Literal,
+  });
   identifiers.push(ident);
 
   while (p.peekTokenIs(token.COMMA)) {
     p.nextToken();
     p.nextToken();
-    const ident = new ast.Identifier(
-      { token: p.curToken, value: p.curToken.Literal },
-    );
+    const ident = new ast.Identifier({
+      token: p.curToken,
+      value: p.curToken.Literal,
+    });
     identifiers.push(ident);
   }
 
@@ -398,9 +409,13 @@ const parseFunctionLiteral = (p: Parser): ast.Expression | null => {
   return lit;
 };
 
-const parseExpressionList = (
-  { p, end }: { p: Parser; end: token.TokenType },
-): ast.Expression[] | null => {
+const parseExpressionList = ({
+  p,
+  end,
+}: {
+  p: Parser;
+  end: token.TokenType;
+}): ast.Expression[] | null => {
   const list: ast.Expression[] = [];
   if (p.peekTokenIs(end)) {
     p.nextToken();
@@ -424,14 +439,95 @@ const parseExpressionList = (
 
 const parseCallExpression = (
   p: Parser,
-  func: ast.Expression,
+  func: ast.Expression
 ): ast.Expression => {
   const exp = new ast.CallExpression({ token: p.curToken, func });
-  exp.Arguments = parseExpressionList(
-    { p, end: token.RPAREN },
-  )!;
+  exp.Arguments = parseExpressionList({ p, end: token.RPAREN })!;
 
   return exp;
+};
+
+const parseStringLiteral = (p: Parser) => {
+  return new ast.StringLiteral({
+    token: p.curToken,
+    value: p.curToken.Literal,
+  });
+};
+
+const parseArrayLiteral = (p: Parser) => {
+  const arr = new ast.ArrayLiteral(p.curToken);
+  arr.Elements = parseExpressionList({ p, end: token.RBRACKET })!;
+
+  return arr;
+};
+
+const parseIndexExpression = (p: Parser, left: ast.Expression) => {
+  const exp = new ast.IndexExpression({ token: p.curToken, left });
+
+  p.nextToken();
+
+  exp.Index = p.parseExpression(priority.LOWEST);
+
+  if (!p.expectPeek(token.RBRACKET)) {
+    return null!;
+  }
+
+  return exp;
+};
+
+const parseHashLiteral = (p: Parser) => {
+  // { をTokenに入れる。
+  const hash = new ast.HashLiteral(p.curToken);
+
+  // 次のtokenが } ではない間は、ハッシュの中身をパースし続ける。
+  while (!p.peekTokenIs(token.RBRACE)) {
+    p.nextToken();
+    const key = p.parseExpression(priority.LOWEST);
+
+    if (!p.expectPeek(token.COLON)) {
+      return null;
+    }
+    p.nextToken();
+    const value = p.parseExpression(priority.LOWEST);
+
+    // hashのキーにできるのはint、bool、string
+    const ok =
+      key instanceof ast.IntegerLiteral ||
+      key instanceof ast.Boolean ||
+      key instanceof ast.StringLiteral;
+    if (!ok) {
+      return null;
+    }
+    // Expressionノードをそのままキーに入れると、キーを上書きする挙動になった。
+    // jsはオブジェクトのキーにインスタンスを入れると、全部[object Object]になって単一のキーになっちゃうぽい。
+    // --------
+    // class Hoge {
+    //   constructor(int) {
+    //        this.int = int
+    //     }
+    // }
+    // const huga = {}
+
+    // huga[new Hoge(1)] = 1
+    // console.log(huga) // { [object Object]: 1 }
+    // huga[new Hoge(2)] = 2
+    // console.log(huga) // { [object Object]: 2 } (1が消えた！)
+    // ---------
+    // なのでint、bool、stringのString()をキーに入れるようにした。これによりハッシュのキーに式を入れれなくなった。
+    // TODO ハッシュのキーに式を入れれるようにする
+    type isHashable = ast.IntegerLiteral | ast.Boolean | ast.StringLiteral;
+    hash.Pairs[(key as isHashable).String()] = value as ast.Expression;
+
+    if (!p.peekTokenIs(token.RBRACE) && !p.expectPeek(token.COMMA)) {
+      return null;
+    }
+  }
+
+  if (!p.expectPeek(token.RBRACE)) {
+    return null;
+  }
+
+  return hash;
 };
 
 const noPrefixParseFnError = (p: Parser, tokenType: token.TokenType) => {
