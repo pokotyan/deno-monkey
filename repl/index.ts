@@ -2,6 +2,7 @@ import * as lexer from "../lexer/index.ts";
 import * as parser from "../parser/index.ts";
 import * as ev from "../evaluator/index.ts";
 import * as env from "../object/environment.ts";
+import { genParserErrors } from "../util/index.ts";
 
 const PROMPT = ">> ";
 
@@ -19,7 +20,8 @@ export const start = async () => {
     const program = p.ParseProgram();
 
     if (p.errors.length) {
-      printParserErrors(p.errors);
+      const errors = genParserErrors(p.errors);
+      console.log(errors);
       continue;
     }
     const evaluated = ev.Eval(program, environment);
@@ -28,28 +30,4 @@ export const start = async () => {
       console.log(evaluated.Inspect());
     }
   }
-};
-
-const MONKEY_FACE = `
-            __,__
-   .--.  .-"     "-.  .--.
-  / .. \\/  .-. .-.  \\/ .. \\
- | |  '|  /   Y   \\  |'  | |
- | \\   \\  \\ 0 | 0 /  /   / |
- \\ '- ,\\.-"""""""-./, -' /
-   ''-' /_   ^ ^   _\ '-''
-       |  \\._   _./  |
-       \\   \\ '~' /   /
-        '._ '-=-' _.'
-           '-----'
-`;
-
-const printParserErrors = (errors: string[]) => {
-  console.log(MONKEY_FACE);
-  console.log("Woops! We ran into some monkey business here!");
-  console.log("parser errors:");
-
-  errors.forEach((err) => {
-    console.log(err);
-  });
 };

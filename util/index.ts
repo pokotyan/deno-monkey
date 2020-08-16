@@ -1,8 +1,28 @@
 export type ValueOf<T> = T[keyof T];
 
-export function getProp<T, K extends keyof T>(
-  obj: T,
-  key: K,
-): ValueOf<T> | undefined {
-  return obj[key];
-}
+const MONKEY_FACE = `
+            __,__
+   .--.  .-"     "-.  .--.
+  / .. \\/  .-. .-.  \\/ .. \\
+ | |  '|  /   Y   \\  |'  | |
+ | \\   \\  \\ 0 | 0 /  /   / |
+ \\ '- ,\\.-"""""""-./, -' /
+   ''-' /_   ^ ^   _\ '-''
+       |  \\._   _./  |
+       \\   \\ '~' /   /
+        '._ '-=-' _.'
+           '-----'
+`;
+
+export const genParserErrors = (errors: string[]) => {
+  let error = "";
+  error += `${MONKEY_FACE}\n`;
+  error += "Woops! We ran into some monkey business here!\n";
+  error += "parser errors:";
+
+  errors.forEach((err) => {
+    error += `${err}\n`;
+  });
+
+  return error;
+};

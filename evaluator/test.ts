@@ -4,7 +4,6 @@ import * as parser from "../parser/index.ts";
 import * as ev from "./index.ts";
 import * as obj from "../object/index.ts";
 import * as env from "../object/environment.ts";
-import * as ast from "../ast/index.ts";
 
 const testIntegerObject = <T extends obj.Integer>({
   obj,

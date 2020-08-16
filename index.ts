@@ -1,6 +1,18 @@
-import * as repl from "./repl/index.ts";
+import { parse } from "https://deno.land/std/flags/mod.ts";
 
-console.log("Hello! This is the Monkey programming language!");
-console.log("Feel free to type in commands");
+const args = parse(Deno.args);
+if (!args.mode) {
+  throw "Can't find the argument `mode`, please specify `mode`";
+}
 
-repl.start();
+const isValidMode = ["repl", "api"].includes(args.mode);
+
+if (!isValidMode) {
+  throw `mode can be "api" or "repl" got: ${args.mode}`;
+}
+
+if (args.mode === "repl") {
+  import("./entry_point/repl.ts");
+} else {
+  import("./entry_point/api.ts");
+}
