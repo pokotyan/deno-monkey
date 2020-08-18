@@ -5,13 +5,13 @@ repl と api サーバーの二通りの起動方法があります。
 
 monkey の repl が起動します。
 
-`deno run --allow-net --allow-read index.ts --mode=repl`
+`deno run --allow-env --allow-net --allow-read index.ts --mode=repl`
 
 # api
 
 api サーバーが起動します。
 
-`deno run --allow-net --allow-read index.ts --mode=api`
+`deno run --allow-env --allow-net --allow-read index.ts --mode=api`
 
 ## /eval
 
