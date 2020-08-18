@@ -1,8 +1,10 @@
 import { Application } from 'https://deno.land/x/oak/mod.ts';
+import { parse } from "https://deno.land/std/flags/mod.ts";
 import _404 from './handler/404.ts';
 import router from './router.ts';
 
-const port = Deno.env.get('PORT') || 8000;
+const args = parse(Deno.args);
+const port = args.port || Deno.env.get('PORT') || 8080;
 
 const app = new Application();
 

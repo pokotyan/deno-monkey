@@ -1,1 +1,1 @@
-web: PORT=${PORT} deno run --allow-env --allow-net --allow-read index.ts --mode=api
+web: deno run --allow-env --allow-net=:${PORT} --allow-read index.ts --mode=api --port=${PORT}
