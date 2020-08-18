@@ -5,14 +5,10 @@ if (!args.mode) {
   throw "Can't find the argument `mode`, please specify `mode`";
 }
 
-const isValidMode = ["repl", "api"].includes(args.mode);
-
-if (!isValidMode) {
-  throw `mode can be "api" or "repl" got: ${args.mode}`;
-}
-
 if (args.mode === "repl") {
-  import("./entry_point/repl.ts");
+  import("./repl/index.ts");
+} else if (args.mode === "api") {
+  import("./api/index.ts");
 } else {
-  import("./entry_point/api.ts");
+  throw `mode can be "api" or "repl" got: ${args.mode}`;
 }

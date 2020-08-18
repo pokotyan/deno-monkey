@@ -7,6 +7,9 @@ import { genParserErrors } from "../util/index.ts";
 const PROMPT = ">> ";
 
 export const start = async () => {
+  console.log("Hello! This is the Monkey programming language!");
+  console.log("Feel free to type in commands");
+
   const environment = env.NewEnvironment();
 
   while (true) {
@@ -31,3 +34,5 @@ export const start = async () => {
     }
   }
 };
+
+start()
